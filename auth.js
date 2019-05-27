@@ -1,10 +1,25 @@
+const fs = require('fs');
 const { Database } = require('kiffdb');
 const uuidv4 = require('uuid/v4');
+const email = require('emailjs');
 
 const db = new Database('auth_db');
 
+const emailAuth = JSON.parse(fs.readFileSync('emailAuth.json'));
+
+const emailServer = email.server.connect({
+  user: emailAuth.user,
+  password: emailAuth.password,
+  host: "smtp.gmail.com",
+  ssl: true,
+});
+
 
 class Auth {
+  constructor(baseUrl) {
+    this._baseUrl = baseUrl;
+  }
+  
   createAndSendToken(data) {
     const token = uuidv4();
 
@@ -20,6 +35,18 @@ class Auth {
     tokenTable.append(entry);
     
     db.persist();
+
+    const message = `Click on the following link to login to GlutenTags:
+http://localhost:9001?token=${token}`;
+
+    emailServer.send({
+      text:    message, 
+       from:    "Me <tapitman11@gmail.com>", 
+       to:      "<tapitman11@gmail.com>",
+       subject: "GlutenTags login key"
+    }, function(err, message) {
+      console.log(err || message);
+    });
 
     return token;
   }
