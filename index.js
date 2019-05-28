@@ -36,5 +36,4 @@ app
   }))
   .use(router.routes())
   .use(router.allowedMethods())
-  .use(router.routes())
   .listen(9001);

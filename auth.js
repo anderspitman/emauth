@@ -41,7 +41,7 @@ http://localhost:9001?token=${token}`;
 
     emailServer.send({
       text:    message, 
-       from:    "Me <tapitman11@gmail.com>", 
+       from:    "GlutenTags auth <tapitman11@gmail.com>", 
        to:      "<tapitman11@gmail.com>",
        subject: "GlutenTags login key"
     }, function(err, message) {
