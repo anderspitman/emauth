@@ -36,14 +36,14 @@ class Auth {
     
     db.persist();
 
-    const message = `Click on the following link to login to GlutenTags:
+    const message = `Click on the following link to login to ThingFeed:
 http://localhost:9001?token=${token}`;
 
     emailServer.send({
       text:    message, 
-       from:    "GlutenTags auth <tapitman11@gmail.com>", 
+       from:    "ThingFeed auth <tapitman11@gmail.com>", 
        to:      "<tapitman11@gmail.com>",
-       subject: "GlutenTags login key"
+       subject: "ThingFeed login key"
     }, function(err, message) {
       console.log(err || message);
     });
