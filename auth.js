@@ -36,14 +36,13 @@ class Auth {
     
     db.persist();
 
-    const message = `Click on the following link to login to ThingFeed:
-http://localhost:9001?token=${token}`;
+    const message = `Here's your key:\n${token}`;
 
     emailServer.send({
       text:    message, 
-       from:    "ThingFeed auth <tapitman11@gmail.com>", 
+       from:    "remoFS auth <tapitman11@gmail.com>", 
        to:      "<tapitman11@gmail.com>",
-       subject: "ThingFeed login key"
+       subject: "remoFS login key"
     }, function(err, message) {
       console.log(err || message);
     });
