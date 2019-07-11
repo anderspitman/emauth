@@ -3,27 +3,32 @@ const { Database } = require('kiffdb');
 const uuidv4 = require('uuid/v4');
 const email = require('emailjs');
 
-const db = new Database('auth_db');
+import path from 'path';
 
-const emailAuth = JSON.parse(fs.readFileSync('emailAuth.json'));
 
-const emailServer = email.server.connect({
-  user: emailAuth.user,
-  password: emailAuth.password,
-  host: "smtp.gmail.com",
-  ssl: true,
-});
 
 
 class Auth {
-  constructor(baseUrl) {
+  constructor(dir, baseUrl) {
     this._baseUrl = baseUrl;
+
+    this._db = new Database(path.join(dir, 'auth_db'));
+
+    const emailAuthFilePath = path.join(dir, 'emailAuth.json');
+    const emailAuth = JSON.parse(fs.readFileSync(emailAuthFilePath));
+
+    this._emailServer = email.server.connect({
+      user: emailAuth.user,
+      password: emailAuth.password,
+      host: "smtp.gmail.com",
+      ssl: true,
+    });
   }
   
   createAndSendToken(data) {
     const token = uuidv4();
 
-    const tokenTable = db.getTable('tokens');
+    const tokenTable = this._db.getTable('tokens');
 
     const entry = {};
 
@@ -34,11 +39,11 @@ class Auth {
 
     tokenTable.append(entry);
     
-    db.persist();
+    this._db.persist();
 
     const message = `Here's your key:\n${token}`;
 
-    emailServer.send({
+    this._emailServer.send({
       text:    message, 
        from:    "remoFS auth <tapitman11@gmail.com>", 
        to:      "<tapitman11@gmail.com>",
@@ -51,7 +56,7 @@ class Auth {
   }
 
   getData(token) {
-    const tokenTable = db.getTable('tokens');
+    const tokenTable = this._db.getTable('tokens');
 
     const matches = tokenTable.getAll()
       .filter(x => x.token === token);
@@ -60,7 +65,7 @@ class Auth {
   }
 
   deleteToken(token) {
-    const tokenTable = db.getTable('tokens');
+    const tokenTable = this._db.getTable('tokens');
 
     const records = tokenTable.getAll();
 
@@ -75,7 +80,7 @@ class Auth {
 
     if (index !== -1) {
       records.splice(index, 1);
-      db.persist();
+      this._db.persist();
     }
   }
 }
