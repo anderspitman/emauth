@@ -42,9 +42,33 @@ class DatabaseBuilder {
 }
 
 
+class AuthBuilder {
+
+  directory(dir) {
+    this._dir = dir;
+    return this;
+  }
+
+  serviceName(name) {
+    this._serviceName = name;
+    return this;
+  }
+
+  build() {
+
+    return new Auth({
+      directory: this._dir,
+      serviceName: this._serviceName,
+    });
+  }
+}
+
+
 class Auth {
-  constructor(dir, baseUrl) {
-    this._baseUrl = baseUrl;
+  constructor(options) {
+
+    const dir = options.directory ? options.directory : './';
+    this._serviceName = options.serviceName ? options.serviceName : "kiss-my-auth";
 
     this._db = new DatabaseBuilder(path.join(dir, 'auth_db.json'))
       .build();
@@ -75,9 +99,9 @@ class Auth {
 
     this._emailServer.send({
       text:    message, 
-       from:    "remoFS auth <tapitman11@gmail.com>", 
+       from:    `${this._serviceName} authenticator <tapitman11@gmail.com>`, 
        to:      "<tapitman11@gmail.com>",
-       subject: "remoFS login key"
+       subject: `${this._serviceName} login key`
     }, function(err, message) {
       console.log(err || message);
     });
@@ -116,5 +140,5 @@ class Auth {
 }
 
 module.exports = {
-  Auth,
+  AuthBuilder,
 };

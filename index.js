@@ -1,4 +1,4 @@
-const { Auth } = require('./auth');
+const { AuthBuilder } = require('./auth');
 
 //const Koa = require('koa');
 //const Router = require('koa-router');
@@ -39,5 +39,5 @@ const { Auth } = require('./auth');
 //  .listen(9001);
 
 module.exports = {
-  Auth,
+  AuthBuilder,
 };
