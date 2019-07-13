@@ -1,18 +1,53 @@
 const fs = require('fs');
-const { Database } = require('kiffdb');
 const uuidv4 = require('uuid/v4');
 const email = require('emailjs');
 
 import path from 'path';
 
 
+class DatabaseNew {
+  constructor(path) {
+
+    this._dbPath = path;
+
+    try {
+      this._db = JSON.parse(fs.readFileSync(this._dbPath));
+    }
+    catch (e) {
+      this._db = {
+        tokens: [],
+      };
+      this.persist();
+    }
+  }
+
+  getTable(tableName) {
+    return this._db[tableName];
+  }
+
+  async persist() {
+    await fs.promises.writeFile(this._dbPath, JSON.stringify(this._db, null, 2));
+  }
+}
+
+
+class DatabaseBuilder {
+  constructor(path) {
+    this._path = path;
+  }
+
+  build() {
+    return new DatabaseNew(this._path);
+  }
+}
 
 
 class Auth {
   constructor(dir, baseUrl) {
     this._baseUrl = baseUrl;
 
-    this._db = new Database(path.join(dir, 'auth_db'));
+    this._db = new DatabaseBuilder(path.join(dir, 'auth_db.json'))
+      .build();
 
     const emailAuthFilePath = path.join(dir, 'emailAuth.json');
     const emailAuth = JSON.parse(fs.readFileSync(emailAuthFilePath));
@@ -30,14 +65,9 @@ class Auth {
 
     const tokenTable = this._db.getTable('tokens');
 
-    const entry = {};
+    const entry = Object.assign({ token }, data);
 
-    for (const column of tokenTable.getColumns()) {
-      entry[column.name] = data[column.name];
-      entry.token = token;
-    }
-
-    tokenTable.append(entry);
+    tokenTable.push(entry);
     
     this._db.persist();
 
@@ -58,7 +88,7 @@ class Auth {
   getData(token) {
     const tokenTable = this._db.getTable('tokens');
 
-    const matches = tokenTable.getAll()
+    const matches = tokenTable
       .filter(x => x.token === token);
 
     return matches[0];
@@ -67,7 +97,7 @@ class Auth {
   deleteToken(token) {
     const tokenTable = this._db.getTable('tokens');
 
-    const records = tokenTable.getAll();
+    const records = tokenTable;
 
     let index = -1;
 
