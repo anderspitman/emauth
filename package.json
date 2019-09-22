@@ -1,5 +1,5 @@
 {
-  "name": "kiss-my-auth",
+  "name": "emauth",
   "version": "0.1.0",
   "description": "",
   "main": "index.js",
@@ -10,13 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "axios": "^0.18.0",
-    "emailjs": "^2.2.0",
-    "kiffdb": "^0.1.0",
-    "koa": "^2.7.0",
-    "koa-bodyparser": "^4.2.1",
-    "koa-router": "^7.4.0",
-    "uuid": "^3.3.2"
+    "emailjs": "^2.2.0"
   },
   "devDependencies": {}
 }

@@ -1,8 +1,10 @@
 const fs = require('fs');
-const uuidv4 = require('uuid/v4');
 const email = require('emailjs');
 
 import path from 'path';
+
+const keyLength = 64;
+const chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 
 
 class DatabaseNew {
@@ -15,7 +17,7 @@ class DatabaseNew {
     }
     catch (e) {
       this._db = {
-        tokens: [],
+        keys: [],
       };
       this.persist();
     }
@@ -68,65 +70,76 @@ class Auth {
   constructor(options) {
 
     const dir = options.directory ? options.directory : './';
-    this._serviceName = options.serviceName ? options.serviceName : "kiss-my-auth";
+    this._serviceName = options.serviceName ? options.serviceName : "emauth";
 
     this._db = new DatabaseBuilder(path.join(dir, 'auth_db.json'))
       .build();
 
-    const emailAuthFilePath = path.join(dir, 'emailAuth.json');
-    const emailAuth = JSON.parse(fs.readFileSync(emailAuthFilePath));
+    const emailConfigFilePath = path.join(dir, 'email_config.json');
+    this._emailConfig = JSON.parse(fs.readFileSync(emailConfigFilePath));
 
     this._emailServer = email.server.connect({
-      user: emailAuth.user,
-      password: emailAuth.password,
-      host: "smtp.gmail.com",
+      user: this._emailConfig.user,
+      password: this._emailConfig.password,
+      host: this._emailConfig.host,
       ssl: true,
     });
   }
   
-  createAndSendToken(data) {
-    const token = uuidv4();
+  createAndSendKey(email) {
+    const key = this._genKey();
 
-    const tokenTable = this._db.getTable('tokens');
+    const keyTable = this._db.getTable('keys');
 
-    const entry = Object.assign({ token }, data);
+    const entry = Object.assign({ email, key });
 
-    tokenTable.push(entry);
+    keyTable.push(entry);
     
     this._db.persist();
 
-    const message = `Here's your key:\n${token}`;
+    const html = `
+      <html>
+        <h1>Here's your key:</h1>
+        <input type='text' style='width: 640px; font-size: 16px;' readonly='readonly' value='${key}'></input>
+        <p style='font-size: 16px;'>
+          Copy and paste it into the verification form.
+        </p>
+      </html>
+    `;
 
     this._emailServer.send({
-      text:    message, 
-       from:    `${this._serviceName} authenticator <tapitman11@gmail.com>`, 
-       to:      "<tapitman11@gmail.com>",
-       subject: `${this._serviceName} login key`
+      from:    `${this._serviceName} authenticator <${this._emailConfig.from}>`, 
+      to:      `<${email}>`,
+      subject: `${this._serviceName} login key`,
+      attachment: {
+        data: html,
+        alternative: true,
+      },
     }, function(err, message) {
       console.log(err || message);
     });
 
-    return token;
+    return key;
   }
 
-  getData(token) {
-    const tokenTable = this._db.getTable('tokens');
+  getData(key) {
+    const keyTable = this._db.getTable('keys');
 
-    const matches = tokenTable
-      .filter(x => x.token === token);
+    const matches = keyTable
+      .filter(x => x.key === key);
 
     return matches[0];
   }
 
-  deleteToken(token) {
-    const tokenTable = this._db.getTable('tokens');
+  deleteKey(key) {
+    const keyTable = this._db.getTable('keys');
 
-    const records = tokenTable;
+    const records = keyTable;
 
     let index = -1;
 
     for (let i = 0; i < records.length; i++) {
-      if (records[i].token === token) {
+      if (records[i].key === key) {
         index = i;
         break;
       }
@@ -136,6 +149,14 @@ class Auth {
       records.splice(index, 1);
       this._db.persist();
     }
+  }
+
+  _genKey() {
+    let key = "";
+    for (let i = 0; i < keyLength; i++) {
+      key += chars[Math.floor(Math.random()*chars.length)];
+    }
+    return key;
   }
 }
 
